@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/app
+    driver-class-name: org.h2.Driver
+    username: sa
+
+onno:
+  auth:
+    users:
+      - username: admin
+        password: admin
+        roles: [ADMIN]
