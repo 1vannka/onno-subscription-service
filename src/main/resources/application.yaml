@@ -3,10 +3,21 @@ spring:
     url: jdbc:h2:file:./data/app
     driver-class-name: org.h2.Driver
     username: sa
+    password:
 
 onno:
+  scan-packages:
+    - com.example.onnosubscriptionservice
   auth:
+    session:
+      remember-me:
+        allow-ephemeral-key: true
     users:
       - username: admin
         password: admin
         roles: [ADMIN]
+
+org:
+  jobrunr:
+    background-job-server:
+      enabled: false
