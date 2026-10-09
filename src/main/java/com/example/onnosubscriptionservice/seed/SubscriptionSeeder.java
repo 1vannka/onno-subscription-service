@@ -50,36 +50,59 @@ public class SubscriptionSeeder implements ApplicationRunner {
         }
 
         Ref<Tariff> basicTariff = createTariff("Базовый", new BigDecimal("500.00"), 30, true);
-        Ref<Tariff> proTariff = createTariff("Профессиональный", new BigDecimal("1500.00"), 30, true);
-        Ref<Tariff> annualTariff = createTariff("Годовой Корпоративный", new BigDecimal("12000.00"), 365, true);
-        Ref<Tariff> legacyTariff = createTariff("Архивный (Недоступен)", new BigDecimal("300.00"), 30, false);
+        Ref<Tariff> standardTariff = createTariff("Стандарт", new BigDecimal("1500.00"), 30, true);
+        Ref<Tariff> proTariff = createTariff("Профессиональный", new BigDecimal("4000.00"), 90, true);
+        Ref<Tariff> annualTariff = createTariff("Корпоративный Годовой", new BigDecimal("15000.00"), 365, true);
+        Ref<Tariff> legacyTariff = createTariff("Архивный Старт", new BigDecimal("350.00"), 30, false);
 
-        Ref<Client> clientRich = createClient("ООО Вектор Плюс", "vector@example.com", "+79991112233", ClientStatus.ACTIVE);
-        Ref<Client> clientBroke = createClient("ИП Пупкин", "pupkin@example.com", "+79994445566", ClientStatus.ACTIVE);
-        Ref<Client> clientNew = createClient("АО Технопарк", "tech@example.com", "+79997778899", ClientStatus.ACTIVE);
+        Ref<Client> clientVector = createClient("ООО 'Вектор Плюс'", "billing@vector-plus.ru", "+7 999 111-22-33", ClientStatus.ACTIVE, 60);
+        Ref<Client> clientDataLab = createClient("АО 'ДатаЛаб'", "finance@datalab.tech", "+7 999 222-33-44", ClientStatus.ACTIVE, 45);
+        Ref<Client> clientRetail = createClient("ООО 'Ритейл Системы'", "it@retail-sys.ru", "+7 999 333-44-55", ClientStatus.ACTIVE, 30);
+        Ref<Client> clientSmirnov = createClient("ИП Смирнов А.В.", "smirnov.dev@mail.ru", "+7 999 444-55-66", ClientStatus.ACTIVE, 20);
+        Ref<Client> clientKuznetsov = createClient("Кузнецов Максим Сергеевич", "kuznetsov.m@gmail.com", "+7 999 555-66-77", ClientStatus.ACTIVE, 15);
+        Ref<Client> clientBlocked = createClient("ООО 'Телеком Дроп'", "bad-debt@telecom.ru", "+7 999 666-77-88", ClientStatus.BLOCKED, 90);
 
-        createAndPostPayment(clientRich, new BigDecimal("20000.00"), PaymentMethod.BANK_TRANSFER, LocalDateTime.now().minusDays(5));
-        createAndPostPayment(clientBroke, new BigDecimal("300.00"), PaymentMethod.BANK_CARD, LocalDateTime.now().minusDays(2));
+        createAndPostPayment(clientVector, new BigDecimal("20000.00"), PaymentMethod.BANK_TRANSFER, LocalDateTime.now().minusDays(25));
+        createAndPostPayment(clientDataLab, new BigDecimal("15000.00"), PaymentMethod.BANK_TRANSFER, LocalDateTime.now().minusDays(20));
+        createAndPostPayment(clientDataLab, new BigDecimal("5000.00"), PaymentMethod.BANK_CARD, LocalDateTime.now().minusDays(5));
+        createAndPostPayment(clientRetail, new BigDecimal("6000.00"), PaymentMethod.BANK_TRANSFER, LocalDateTime.now().minusDays(18));
+        createAndPostPayment(clientSmirnov, new BigDecimal("5000.00"), PaymentMethod.BANK_CARD, LocalDateTime.now().minusDays(14));
+        createAndPostPayment(clientSmirnov, new BigDecimal("3000.00"), PaymentMethod.CASH, LocalDateTime.now().minusDays(4));
+        createAndPostPayment(clientKuznetsov, new BigDecimal("2500.00"), PaymentMethod.BANK_CARD, LocalDateTime.now().minusDays(40));
+        createAndPostPayment(clientKuznetsov, new BigDecimal("1000.00"), PaymentMethod.CASH, LocalDateTime.now().minusDays(2));
 
-        Subscription sub1 = new Subscription();
-        sub1.setClient(clientRich);
-        sub1.setDate(LocalDateTime.now().minusDays(3));
-        sub1.setStartDate(LocalDate.now().minusDays(3));
-        sub1.setStatus(SubscriptionStatus.ACTIVE);
-        sub1.getLines().add(createLine(proTariff, 2));
-        sub1.getLines().add(createLine(basicTariff, 1));
-        sub1.beforeWrite();
-        sub1 = subscriptionRepository.save(sub1);
-        postingService.post(sub1);
 
-        Subscription sub2 = new Subscription();
-        sub2.setClient(clientBroke);
-        sub2.setDate(LocalDateTime.now());
-        sub2.setStartDate(LocalDate.now());
-        sub2.setStatus(SubscriptionStatus.DRAFT);
-        sub2.getLines().add(createLine(proTariff, 1));
-        sub2.beforeWrite();
-        subscriptionRepository.save(sub2);
+        createSubscription(clientVector, annualTariff, 1, LocalDate.now().minusDays(20), SubscriptionStatus.ACTIVE, true);
+
+        Subscription multiSub = new Subscription();
+        multiSub.setClient(clientDataLab);
+        multiSub.setDate(LocalDateTime.now().minusDays(15));
+        multiSub.setStartDate(LocalDate.now().minusDays(15));
+        multiSub.setStatus(SubscriptionStatus.ACTIVE);
+        multiSub.getLines().add(createLine(standardTariff, 2));
+        multiSub.getLines().add(createLine(proTariff, 1));
+        multiSub.beforeWrite();
+        multiSub = subscriptionRepository.save(multiSub);
+        postingService.post(multiSub);
+
+        createSubscription(clientRetail, standardTariff, 2, LocalDate.now().minusDays(10), SubscriptionStatus.ACTIVE, true);
+
+        createSubscription(clientSmirnov, proTariff, 1, LocalDate.now().minusDays(3), SubscriptionStatus.ACTIVE, true);
+
+        createSubscription(clientKuznetsov, basicTariff, 1, LocalDate.now().minusDays(40), SubscriptionStatus.EXPIRED, true);
+
+        Subscription cancelledSub = new Subscription();
+        cancelledSub.setClient(clientBlocked);
+        cancelledSub.setDate(LocalDateTime.now().minusDays(12));
+        cancelledSub.setStartDate(LocalDate.now().minusDays(12));
+        cancelledSub.setStatus(SubscriptionStatus.CANCELLED);
+        cancelledSub.getLines().add(createLine(standardTariff, 1));
+        cancelledSub.beforeWrite();
+        cancelledSub = subscriptionRepository.save(cancelledSub);
+        postingService.post(cancelledSub);
+
+        createSubscription(clientSmirnov, standardTariff, 1, LocalDate.now(), SubscriptionStatus.DRAFT, false);
+        createSubscription(clientRetail, annualTariff, 1, LocalDate.now(), SubscriptionStatus.DRAFT, false);
     }
 
     private Ref<Tariff> createTariff(String name, BigDecimal price, int days, boolean available) {
@@ -91,13 +114,13 @@ public class SubscriptionSeeder implements ApplicationRunner {
         return Ref.of(Tariff.class, tariffRepository.save(t).getId());
     }
 
-    private Ref<Client> createClient(String name, String email, String phone, ClientStatus status) {
+    private Ref<Client> createClient(String name, String email, String phone, ClientStatus status, int daysAgo) {
         Client c = new Client();
         c.setName(name);
         c.setEmail(email);
         c.setPhone(phone);
         c.setStatus(status);
-        c.setRegistrationDate(LocalDate.now().minusMonths(1));
+        c.setRegistrationDate(LocalDate.now().minusDays(daysAgo));
         return Ref.of(Client.class, clientRepository.save(c).getId());
     }
 
@@ -116,5 +139,20 @@ public class SubscriptionSeeder implements ApplicationRunner {
         line.setTariff(tariff);
         line.setPeriods(periods);
         return line;
+    }
+
+    private void createSubscription(Ref<Client> client, Ref<Tariff> tariff, int periods,
+                                    LocalDate startDate, SubscriptionStatus status, boolean post) {
+        Subscription sub = new Subscription();
+        sub.setClient(client);
+        sub.setDate(startDate.atStartOfDay());
+        sub.setStartDate(startDate);
+        sub.setStatus(status);
+        sub.getLines().add(createLine(tariff, periods));
+        sub.beforeWrite();
+        sub = subscriptionRepository.save(sub);
+        if (post) {
+            postingService.post(sub);
+        }
     }
 }
