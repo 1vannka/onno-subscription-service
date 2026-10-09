@@ -21,16 +21,18 @@ repositories {
 val onnoVersion = "2.0.0"
 
 dependencies {
-	implementation("org.springframework.boot:spring-boot-starter")
-
 	implementation("su.onno:onno-framework-starter:$onnoVersion")
 	implementation("su.onno:onno-ui-starter:$onnoVersion")
 	implementation("su.onno:onno-auth-starter:$onnoVersion")
 
+	implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
 	runtimeOnly("com.h2database:h2")
+}
 
-	testImplementation("org.springframework.boot:spring-boot-starter-test")
-	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+tasks.withType<JavaCompile> {
+	options.encoding = "UTF-8"
+	options.compilerArgs.add("-parameters")
 }
 
 tasks.withType<Test> {
