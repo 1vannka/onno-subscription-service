@@ -35,8 +35,7 @@ public class PaymentView implements EntityView {
         fields.field("paymentMethod").order(40).width("half")
                 .hint("How the client paid");
         fields.field("amount").order(50).width("half")
-                .format("currency:USD")
+                .format("currency:RUB")
                 .hint("Amount credited to the client account on posting");
-        fields.field("posted").order(60).width("half");
     }
 }

@@ -17,7 +17,7 @@ public class ClientView implements EntityView {
     @Override
     public void list(ListSpec spec) {
         spec.column("code", "Code");
-        spec.column("description", "Name");
+        spec.column("description", "Description");
         spec.column("status", "Status");
         spec.column("email", "Email");
         spec.column("phone", "Phone");
@@ -27,7 +27,7 @@ public class ClientView implements EntityView {
     @Override
     public void fields(EntityConfigBuilder fields) {
         fields.field("code").order(10).width("half").label("Code");
-        fields.field("description").order(20).width("half").label("Name")
+        fields.field("description").order(20).width("half").label("Description")
                 .hint("Display name of the client");
         fields.field("status").order(30).width("half")
                 .hint("Active clients can be billed and subscribed");

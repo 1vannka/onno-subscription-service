@@ -17,7 +17,7 @@ public class TariffView implements EntityView {
     @Override
     public void list(ListSpec spec) {
         spec.column("code", "Code");
-        spec.column("description", "Name");
+        spec.column("description", "Description");
         spec.column("pricePerPeriod", "Price per period");
         spec.column("periodDurationDays", "Period duration (days)");
         spec.column("availableForConnection", "Available");
@@ -26,10 +26,10 @@ public class TariffView implements EntityView {
     @Override
     public void fields(EntityConfigBuilder fields) {
         fields.field("code").order(10).width("half").label("Code");
-        fields.field("description").order(20).width("half").label("Name")
+        fields.field("description").order(20).width("half").label("Description")
                 .hint("Display name of the tariff plan");
         fields.field("pricePerPeriod").order(30).width("half")
-                .format("currency:USD")
+                .format("currency:RUB")
                 .hint("Price charged for one billing period");
         fields.field("periodDurationDays").order(40).width("half")
                 .format("integer")

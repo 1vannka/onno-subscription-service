@@ -1,5 +1,6 @@
-package com.example.onnosubscriptionservice.domain.catalogs;
+package com.example.onnosubscriptionservice.repositories;
 
+import com.example.onnosubscriptionservice.domain.catalogs.Tariff;
 import org.springframework.stereotype.Repository;
 import su.onno.repository.CatalogRepository;
 

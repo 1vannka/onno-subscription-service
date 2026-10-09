@@ -1,12 +1,12 @@
 package com.example.onnosubscriptionservice.domain;
 
 import com.example.onnosubscriptionservice.domain.catalogs.Tariff;
-import com.example.onnosubscriptionservice.domain.catalogs.TariffRepository;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import su.onno.types.Ref;
+import su.onno.types.RefResolver;
 
 import java.util.function.Function;
 
@@ -28,8 +28,8 @@ public class DomainLookups implements ApplicationContextAware {
         if (context == null || ref == null || ref.id() == null) {
             return null;
         }
-        return context.getBean(TariffRepository.class)
-                .findActiveById(ref.id())
+        return context.getBean(RefResolver.class)
+                .resolve(ref)
                 .orElse(null);
     }
 

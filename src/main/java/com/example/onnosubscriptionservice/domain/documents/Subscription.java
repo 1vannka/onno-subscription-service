@@ -11,6 +11,7 @@ import su.onno.annotations.Attribute;
 import su.onno.annotations.Document;
 import su.onno.annotations.TabularSection;
 import su.onno.lifecycle.BeforeWriteHandler;
+import su.onno.lifecycle.OnFillingHandler;
 import su.onno.lifecycle.Postable;
 import su.onno.model.DocumentObject;
 import su.onno.posting.PostingContext;
@@ -26,7 +27,7 @@ import java.util.List;
 
 @Document(name = "Subscriptions", title = "Subscriptions", numberPrefix = "SUB-", context = "Subscriptions")
 @AccessControl(readRoles = {"ADMIN"}, writeRoles = {"ADMIN"})
-public class Subscription extends DocumentObject implements Validated, BeforeWriteHandler, Postable {
+public class Subscription extends DocumentObject implements OnFillingHandler, Validated, BeforeWriteHandler, Postable {
 
     @Attribute(displayName = "Client", required = true)
     private Ref<Client> client;
@@ -34,14 +35,17 @@ public class Subscription extends DocumentObject implements Validated, BeforeWri
     @Attribute(displayName = "Status", required = true)
     private SubscriptionStatus status = SubscriptionStatus.DRAFT;
 
-    @Attribute(displayName = "Start date")
-    private LocalDate startDate;
+    @Attribute(displayName = "Start date", required = true)
+    private LocalDate startDate = LocalDate.now();
 
     @Attribute(displayName = "End date")
     private LocalDate endDate;
 
     @Attribute(displayName = "Total", precision = 15, scale = 2)
     private BigDecimal total = BigDecimal.ZERO;
+
+    @Attribute(displayName = "Cancellation reason", length = 500)
+    private String cancellationReason;
 
     @TabularSection(name = "lines")
     private List<SubscriptionLine> lines = new ArrayList<>();
@@ -70,6 +74,10 @@ public class Subscription extends DocumentObject implements Validated, BeforeWri
         }
         if (lines == null) {
             lines = new ArrayList<>();
+        }
+
+        if (isPosted() && status == SubscriptionStatus.DRAFT && !startDate.isAfter(LocalDate.now())) {
+            status = SubscriptionStatus.ACTIVE;
         }
 
         int maxDurationDays = 0;
@@ -104,39 +112,34 @@ public class Subscription extends DocumentObject implements Validated, BeforeWri
         }
 
         var accounts = context.movements(ClientAccount.class);
-
-        BigDecimal currentBalance = accounts.getBalance().stream()
-                .filter(acc -> acc.getClient() != null
-                        && client != null
-                        && client.id() != null
-                        && client.id().equals(acc.getClient().id()))
-                .map(ClientAccount::getAmount)
-                .filter(amount -> amount != null)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        if (currentBalance.compareTo(total) < 0) {
-            throw new IllegalStateException(
-                    String.format("Недостаточно средств на лицевом счете. Баланс: %s, требуется: %s",
-                            currentBalance, total)
-            );
-        }
-
         accounts.addExpense(movement -> {
             movement.setClient(client);
             movement.setAmount(total);
         });
 
         var revenue = context.movements(TariffRevenue.class);
-        if (lines == null) {
-            return;
+        if (lines != null) {
+            for (SubscriptionLine line : lines) {
+                if (line.getTariff() == null || line.getAmount() == null) {
+                    continue;
+                }
+                revenue.addReceipt(movement -> {
+                    movement.setTariff(line.getTariff());
+                    movement.setClient(client);
+                    movement.setAmount(line.getAmount());
+                    movement.setPeriods(line.getPeriods());
+                });
+            }
         }
-        for (SubscriptionLine line : lines) {
-            revenue.addReceipt(movement -> {
-                movement.setTariff(line.getTariff());
-                movement.setClient(client);
-                movement.setAmount(line.getAmount());
-                movement.setPeriods(line.getPeriods());
-            });
+    }
+
+    @Override
+    public void onFilling() {
+        if (getDate() == null) {
+            setDate(LocalDateTime.now());
+        }
+        if (startDate == null) {
+            startDate = LocalDate.now();
         }
     }
 
@@ -195,5 +198,13 @@ public class Subscription extends DocumentObject implements Validated, BeforeWri
 
     public void setLines(List<SubscriptionLine> lines) {
         this.lines = lines;
+    }
+
+    public String getCancellationReason() {
+        return cancellationReason;
+    }
+
+    public void setCancellationReason(String cancellationReason) {
+        this.cancellationReason = cancellationReason;
     }
 }

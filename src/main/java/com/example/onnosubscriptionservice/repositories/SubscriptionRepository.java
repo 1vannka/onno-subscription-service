@@ -1,5 +1,6 @@
-package com.example.onnosubscriptionservice.domain.documents;
+package com.example.onnosubscriptionservice.repositories;
 
+import com.example.onnosubscriptionservice.domain.documents.Subscription;
 import org.springframework.stereotype.Repository;
 import su.onno.repository.DocumentRepository;
 

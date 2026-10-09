@@ -20,9 +20,6 @@ public class Tariff extends CatalogObject {
     @Attribute(displayName = "Available for connection")
     private boolean availableForConnection = true;
 
-    @Attribute(displayName = "Name", required = true, length = 200)
-    private String name;
-
     public BigDecimal getPricePerPeriod() {
         return pricePerPeriod;
     }
@@ -47,7 +44,11 @@ public class Tariff extends CatalogObject {
         this.availableForConnection = availableForConnection;
     }
 
-    public String getName() {return name;}
+    public String getName() {
+        return getDescription();
+    }
 
-    public void setName(String name) {this.name=name;}
+    public void setName(String name) {
+        setDescription(name);
+    }
 }

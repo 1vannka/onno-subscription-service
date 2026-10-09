@@ -7,6 +7,7 @@ import su.onno.annotations.AccessControl;
 import su.onno.annotations.Attribute;
 import su.onno.annotations.Document;
 import su.onno.lifecycle.BeforeWriteHandler;
+import su.onno.lifecycle.OnFillingHandler;
 import su.onno.lifecycle.Postable;
 import su.onno.model.DocumentObject;
 import su.onno.posting.PostingContext;
@@ -15,12 +16,13 @@ import su.onno.rules.Validated;
 import su.onno.types.Ref;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Document(name = "Payments", title = "Payments", numberPrefix = "PAY-", context = "Subscriptions")
 @AccessControl(readRoles = {"ADMIN"}, writeRoles = {"ADMIN"})
-public class Payment extends DocumentObject implements Postable, Validated, BeforeWriteHandler {
+public class Payment extends DocumentObject implements OnFillingHandler, Postable, Validated, BeforeWriteHandler {
 
     @Attribute(displayName = "Client", required = true)
     private Ref<Client> client;
@@ -57,6 +59,13 @@ public class Payment extends DocumentObject implements Postable, Validated, Befo
             movement.setClient(client);
             movement.setAmount(amount);
         });
+    }
+
+    @Override
+    public void onFilling() {
+        if (getDate() == null) {
+            setDate(LocalDateTime.now());
+        }
     }
 
     public Ref<Client> getClient() {

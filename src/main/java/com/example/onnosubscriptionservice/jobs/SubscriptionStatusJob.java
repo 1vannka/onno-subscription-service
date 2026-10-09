@@ -1,8 +1,9 @@
 package com.example.onnosubscriptionservice.jobs;
 
 import com.example.onnosubscriptionservice.domain.documents.Subscription;
-import com.example.onnosubscriptionservice.domain.documents.SubscriptionRepository;
+import com.example.onnosubscriptionservice.repositories.SubscriptionRepository;
 import com.example.onnosubscriptionservice.domain.enums.SubscriptionStatus;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import su.onno.annotations.ScheduledJob;
 import su.onno.jobs.BackgroundTask;
@@ -17,18 +18,17 @@ public class SubscriptionStatusJob implements BackgroundTask {
 
     private final SubscriptionRepository subscriptionRepository;
 
-    public SubscriptionStatusJob(SubscriptionRepository subscriptionRepository) {
+    public SubscriptionStatusJob(@Lazy SubscriptionRepository subscriptionRepository) {
         this.subscriptionRepository = subscriptionRepository;
     }
 
     @Override
     public void execute() {
         LocalDate today = LocalDate.now();
-        List<Subscription> subscriptions = subscriptionRepository.findAllActive();
         List<Subscription> toSave = new ArrayList<>();
 
-        for (Subscription sub : subscriptions) {
-            if (sub.getStatus() == SubscriptionStatus.CANCELLED) {
+        for (Subscription sub : subscriptionRepository.findAll()) {
+            if (sub.getStatus() == SubscriptionStatus.CANCELLED || !sub.isPosted()) {
                 continue;
             }
 
@@ -39,9 +39,8 @@ public class SubscriptionStatusJob implements BackgroundTask {
                     sub.setStatus(SubscriptionStatus.EXPIRED);
                     changed = true;
                 }
-            }
-            else if (sub.isPosted() && sub.getStartDate() != null && !sub.getStartDate().isAfter(today)) {
-                if (sub.getStatus() == SubscriptionStatus.DRAFT) {
+            } else if (sub.getStartDate() != null && !sub.getStartDate().isAfter(today)) {
+                if (sub.getStatus() != SubscriptionStatus.ACTIVE) {
                     sub.setStatus(SubscriptionStatus.ACTIVE);
                     changed = true;
                 }

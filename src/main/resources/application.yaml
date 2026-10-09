@@ -6,8 +6,6 @@ spring:
     password:
 
 onno:
-  scan-packages:
-    - com.example.onnosubscriptionservice
   auth:
     session:
       remember-me:
@@ -16,8 +14,3 @@ onno:
       - username: admin
         password: admin
         roles: [ADMIN]
-
-org:
-  jobrunr:
-    background-job-server:
-      enabled: false
