@@ -20,6 +20,7 @@ import su.onno.types.Ref;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,6 +62,9 @@ public class Subscription extends DocumentObject implements Validated, BeforeWri
 
     @Override
     public void beforeWrite() {
+        if (getDate() == null) {
+            setDate(LocalDateTime.now());
+        }
         if (startDate == null) {
             startDate = LocalDate.now();
         }
@@ -100,6 +104,23 @@ public class Subscription extends DocumentObject implements Validated, BeforeWri
         }
 
         var accounts = context.movements(ClientAccount.class);
+
+        BigDecimal currentBalance = accounts.getBalance().stream()
+                .filter(acc -> acc.getClient() != null
+                        && client != null
+                        && client.id() != null
+                        && client.id().equals(acc.getClient().id()))
+                .map(ClientAccount::getAmount)
+                .filter(amount -> amount != null)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (currentBalance.compareTo(total) < 0) {
+            throw new IllegalStateException(
+                    String.format("Недостаточно средств на лицевом счете. Баланс: %s, требуется: %s",
+                            currentBalance, total)
+            );
+        }
+
         accounts.addExpense(movement -> {
             movement.setClient(client);
             movement.setAmount(total);

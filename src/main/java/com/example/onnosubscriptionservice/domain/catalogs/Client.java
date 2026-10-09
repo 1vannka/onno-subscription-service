@@ -24,6 +24,9 @@ public class Client extends CatalogObject {
     @Attribute(displayName = "Registration date", required = true)
     private LocalDate registrationDate = LocalDate.now();
 
+    @Attribute(displayName = "Name", required = true, length = 200)
+    private String name;
+
     public ClientStatus getStatus() {
         return status;
     }
@@ -55,4 +58,8 @@ public class Client extends CatalogObject {
     public void setRegistrationDate(LocalDate registrationDate) {
         this.registrationDate = registrationDate;
     }
+
+    public String getName() {return name;}
+
+    public void setName(String name) {this.name=name;}
 }
