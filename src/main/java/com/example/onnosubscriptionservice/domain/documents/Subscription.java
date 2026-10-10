@@ -76,8 +76,16 @@ public class Subscription extends DocumentObject implements OnFillingHandler, Va
             lines = new ArrayList<>();
         }
 
-        if (isPosted() && status == SubscriptionStatus.DRAFT && !startDate.isAfter(LocalDate.now())) {
-            status = SubscriptionStatus.ACTIVE;
+        if (!isPosted() && status != SubscriptionStatus.CANCELLED) {
+            status = SubscriptionStatus.DRAFT;
+        }
+
+        if (isPosted() && status != SubscriptionStatus.CANCELLED && status != SubscriptionStatus.EXPIRED) {
+            if (!startDate.isAfter(LocalDate.now())) {
+                status = SubscriptionStatus.ACTIVE;
+            } else {
+                status = SubscriptionStatus.DRAFT;
+            }
         }
 
         int maxDurationDays = 0;

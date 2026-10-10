@@ -7,34 +7,46 @@ import su.onno.ui.EntityView;
 import su.onno.ui.ListSpec;
 
 @Component
-public class PaymentView implements EntityView {
+public class PaymentView implements EntityView<Payment> {
 
     @Override
-    public Class<?> entity() {
+    public Class<Payment> entity() {
         return Payment.class;
     }
 
     @Override
-    public void list(ListSpec spec) {
-        spec.column("number", "Number");
-        spec.column("date", "Date");
-        spec.column("client", "Client");
-        spec.column("amount", "Amount");
-        spec.column("paymentMethod", "Payment method");
-        spec.column("posted", "Posted");
+    public void list(ListSpec<Payment> list) {
+        list.columns(
+                Payment::getNumber,
+                Payment::getDate,
+                Payment::getClient,
+                Payment::getAmount,
+                Payment::getPaymentMethod,
+                Payment::isPosted
+        );
+        list.label(Payment::getNumber, "Number");
+        list.label(Payment::getDate, "Date");
+        list.label(Payment::getClient, "Client");
+        list.label(Payment::getAmount, "Amount");
+        list.label(Payment::getPaymentMethod, "Payment method");
+        list.label(Payment::isPosted, "Posted");
     }
 
     @Override
-    public void fields(EntityConfigBuilder fields) {
-        fields.field("number").order(10).width("half");
-        fields.field("date").order(20).width("half")
+    public void fields(EntityConfigBuilder<Payment> f) {
+        f.field(Payment::getNumber).order(10).width("half");
+
+        f.field(Payment::getDate).order(20).width("half")
                 .format("dd/MM/yyyy HH:mm")
                 .hint("Document date of the payment");
-        fields.field("client").order(30).width("half")
+
+        f.field(Payment::getClient).order(30).width("half")
                 .hint("Client whose account is topped up");
-        fields.field("paymentMethod").order(40).width("half")
+
+        f.field(Payment::getPaymentMethod).order(40).width("half")
                 .hint("How the client paid");
-        fields.field("amount").order(50).width("half")
+
+        f.field(Payment::getAmount).order(50).width("half")
                 .format("currency:RUB")
                 .hint("Amount credited to the client account on posting");
     }

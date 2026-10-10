@@ -76,10 +76,27 @@ public class SubscriptionView implements EntityView<Subscription> {
                 .label("Price").format("currency:RUB");
         f.rowField(Subscription::getLines, SubscriptionLine::getAmount)
                 .label("Amount").format("currency:RUB");
+        f.action("post").hidden();
+        f.action("unpost").hidden();
+        f.action("postDetail").primary();
     }
 
     @Override
     public void actions(ActionSpec a) {
+        a.action("postRow").scope(ActionScope.ROW).icon("check").label("Post")
+                .visibleWhen(row -> {
+                    SubscriptionStatus st = row.enumValue("status", SubscriptionStatus.class);
+                    return st == SubscriptionStatus.DRAFT;
+                })
+                .handler(ctx -> post(ctx.id()));
+
+        a.action("postDetail").scope(ActionScope.DETAIL).icon("check").label("Post")
+                .visibleWhen(row -> {
+                    SubscriptionStatus st = row.enumValue("status", SubscriptionStatus.class);
+                    return st == SubscriptionStatus.DRAFT;
+                })
+                .handler(ctx -> post(ctx.id()));
+
         a.action("cancelRow").scope(ActionScope.ROW).icon("ban").label("Cancel")
                 .visibleWhen(row -> {
                     SubscriptionStatus st = row.enumValue("status", SubscriptionStatus.class);
@@ -99,15 +116,55 @@ public class SubscriptionView implements EntityView<Subscription> {
                 .handler(ctx -> cancel(ctx.id(), ctx.input("reason")));
     }
 
-    private ActionResult cancel(UUID id, String reason) {
+    private ActionResult post(UUID id) {
         return subscriptionRepository.findById(id).map(sub -> {
             if (sub.isPosted()) {
-                postingService.unpost(sub);
+                return ActionResult.toast(ActionToast.warning("Subscription is already posted"));
             }
-            sub.setStatus(SubscriptionStatus.CANCELLED);
-            sub.setCancellationReason(reason);
-            subscriptionRepository.save(sub);
-            return ActionResult.refresh(ActionToast.success("Subscription cancelled"));
+
+            try {
+                postingService.post(sub);
+                sub.setStatus(SubscriptionStatus.ACTIVE);
+                subscriptionRepository.save(sub);
+                return ActionResult.refresh(ActionToast.success("Subscription was successfully posted and activate"));
+            } catch (Exception ex) {
+                String errorMsg = ex.getMessage();
+
+                if (errorMsg != null && errorMsg.contains("Insufficient amount in register")) {
+                    errorMsg = "Not enough money";
+                } else if (errorMsg == null || errorMsg.isBlank()) {
+                    errorMsg = "Error with posting";
+                }
+
+                return ActionResult.toast(ActionToast.warning(errorMsg));
+            }
+        }).orElseGet(() -> ActionResult.toast(ActionToast.warning("Subscription was not found")));
+    }
+
+    private ActionResult cancel(UUID id, String reason) {
+        if (reason == null || reason.trim().isEmpty()) {
+            return ActionResult.toast(ActionToast.warning("Cancellation reason is required"));
+        }
+
+        return subscriptionRepository.findById(id).map(sub -> {
+            if (sub.getStatus() == SubscriptionStatus.CANCELLED) {
+                return ActionResult.toast(ActionToast.warning("Subscription is already cancelled"));
+            }
+
+            try {
+                if (sub.isPosted()) {
+                    postingService.unpost(sub);
+                }
+                sub.setStatus(SubscriptionStatus.CANCELLED);
+                sub.setCancellationReason(reason.trim());
+                subscriptionRepository.save(sub);
+                return ActionResult.refresh(ActionToast.success("Subscription cancelled"));
+            } catch (Exception ex) {
+                String errorMsg = ex.getMessage() != null && !ex.getMessage().isBlank()
+                        ? ex.getMessage()
+                        : "Failed to cancel subscription";
+                return ActionResult.toast(ActionToast.warning(errorMsg));
+            }
         }).orElseGet(() -> ActionResult.toast(ActionToast.warning("Subscription not found")));
     }
 }
