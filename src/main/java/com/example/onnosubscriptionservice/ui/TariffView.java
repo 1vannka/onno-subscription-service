@@ -7,34 +7,44 @@ import su.onno.ui.EntityView;
 import su.onno.ui.ListSpec;
 
 @Component
-public class TariffView implements EntityView {
+public class TariffView implements EntityView<Tariff> {
 
     @Override
-    public Class<?> entity() {
+    public Class<Tariff> entity() {
         return Tariff.class;
     }
 
     @Override
-    public void list(ListSpec spec) {
-        spec.column("code", "Code");
-        spec.column("description", "Description");
-        spec.column("pricePerPeriod", "Price per period");
-        spec.column("periodDurationDays", "Period duration (days)");
-        spec.column("availableForConnection", "Available");
+    public void list(ListSpec<Tariff> list) {
+        list.columns(
+                Tariff::getCode,
+                Tariff::getDescription,
+                Tariff::getPricePerPeriod,
+                Tariff::getPeriodDurationDays,
+                Tariff::isAvailableForConnection
+        );
+        list.label(Tariff::getCode, "Code");
+        list.label(Tariff::getDescription, "Description");
+        list.label(Tariff::getPricePerPeriod, "Price per period");
+        list.label(Tariff::getPeriodDurationDays, "Period duration (days)");
+        list.label(Tariff::isAvailableForConnection, "Available");
     }
 
     @Override
-    public void fields(EntityConfigBuilder fields) {
-        fields.field("code").order(10).width("half").label("Code");
-        fields.field("description").order(20).width("half").label("Description")
+    public void fields(EntityConfigBuilder<Tariff> f) {
+        f.field(Tariff::getCode).order(10).width("half").label("Code");
+        f.field(Tariff::getDescription).order(20).width("half").label("Description")
                 .hint("Display name of the tariff plan");
-        fields.field("pricePerPeriod").order(30).width("half")
+
+        f.field(Tariff::getPricePerPeriod).order(30).width("half")
                 .format("currency:RUB")
                 .hint("Price charged for one billing period");
-        fields.field("periodDurationDays").order(40).width("half")
+
+        f.field(Tariff::getPeriodDurationDays).order(40).width("half")
                 .format("integer")
                 .hint("Length of one billing period in days");
-        fields.field("availableForConnection").order(50).width("half")
+
+        f.field(Tariff::isAvailableForConnection).order(50).width("half")
                 .widget("switch")
                 .hint("Only available tariffs can be added to a subscription");
     }

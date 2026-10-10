@@ -7,36 +7,44 @@ import su.onno.ui.EntityView;
 import su.onno.ui.ListSpec;
 
 @Component
-public class ClientView implements EntityView {
+public class ClientView implements EntityView<Client> {
 
     @Override
-    public Class<?> entity() {
+    public Class<Client> entity() {
         return Client.class;
     }
 
     @Override
-    public void list(ListSpec spec) {
-        spec.column("code", "Code");
-        spec.column("description", "Description");
-        spec.column("status", "Status");
-        spec.column("email", "Email");
-        spec.column("phone", "Phone");
-        spec.column("registrationDate", "Registration date");
+    public void list(ListSpec<Client> list) {
+        list.columns(
+                Client::getCode,
+                Client::getDescription,
+                Client::getStatus,
+                Client::getEmail,
+                Client::getPhone,
+                Client::getRegistrationDate
+        );
+        list.label(Client::getCode, "Code");
+        list.label(Client::getDescription, "Description");
     }
 
     @Override
-    public void fields(EntityConfigBuilder fields) {
-        fields.field("code").order(10).width("half").label("Code");
-        fields.field("description").order(20).width("half").label("Description")
+    public void fields(EntityConfigBuilder<Client> f) {
+        f.field(Client::getCode).order(10).width("half").label("Code");
+        f.field(Client::getDescription).order(20).width("half").label("Description")
                 .hint("Display name of the client");
-        fields.field("status").order(30).width("half")
+
+        f.field(Client::getStatus).order(30).width("half")
                 .hint("Active clients can be billed and subscribed");
-        fields.field("registrationDate").order(40).width("half")
+
+        f.field(Client::getRegistrationDate).order(40).width("half")
                 .format("dd/MM/yyyy")
                 .hint("Date the client was registered");
-        fields.field("email").order(50).width("half")
+
+        f.field(Client::getEmail).order(50).width("half")
                 .hint("Used for notices and invoices");
-        fields.field("phone").order(60).width("half")
+
+        f.field(Client::getPhone).order(60).width("half")
                 .hint("Contact phone number");
     }
 }
